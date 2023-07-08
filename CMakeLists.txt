@@ -8,8 +8,7 @@ include_directories(include local/include)
 link_directories(local/lib)
 
 add_compile_options(-Wall -fPIC)
-set(LIBS librtaudio.a m dl pthread stdc++
-         pulse pulse-simple asound jack)
+set(LIBS rtaudio m dl pthread)
 
 add_executable(chimes src/chimes.c src/main.c)
 target_link_libraries(chimes ${LIBS})
