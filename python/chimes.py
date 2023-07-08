@@ -112,7 +112,7 @@ def resonator_coefs(modes):
     for i, f in enumerate(modes):
         R = Rs[i]
         G = Gs[i]
-        cos_theta = math.cos(2 * math.pi * f / FS) * (2 * R) / (1 + (R * R))
+        cos_theta = math.cos(2 * math.pi * f * TS) * (2 * R) / (1 + (R * R))
         sin_theta = math.sqrt(1 - (cos_theta * cos_theta))
         A_zero = (1 + (R * R)) * sin_theta
         b_s = [A_zero * G, 0.0, -A_zero * G]
@@ -128,38 +128,29 @@ en = list(map(energy, range(len(time))))
 h_prob = list(map(hit_prob, en))
 
 trigger = Trigger(N_BELLS)
-strikes = []
 energy.En_prev = 0
-for i in range(len(time)):
-    s = trigger.update(i)
-    strikes.append(s)
+strikes = [trigger.update(i) for i in range(len(time))]
 
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(4)
-ax1.grid(True)
-ax2.grid(True)
-ax3.grid(True)
-ax4.grid(True)
+fig, axs = plt.subplots(4)
+for ax in axs:
+    ax.grid(True)
 
-ax1.plot(time, wnd_s)
-ax2.plot(time, en)
-ax3.plot(time, h_prob)
-ax4.plot(time, strikes)
+axs[0].plot(time, wnd_s)
+axs[1].plot(time, en)
+axs[2].plot(time, h_prob)
+axs[3].plot(time, strikes)
 plt.xlabel("time [s]")
 plt.show()
 
-for i, m in enumerate(MODES):
-    n = round(1.0 / TS)
+for i, ms in enumerate(MODES):
+    n = FS
     bg = BurstGen()
     bg.reset(0.2)
-    brst = []
-    for j in range(n):
-        brst.append(bg.update(j))
-    output = np.zeros(n)
-    fs = resonator_coefs(m)
+    brst = [bg.update(j) for j in range(n)]
+    fs = resonator_coefs(ms)
 
-    for f in fs:
-        output += sig.lfilter(f[0], f[1], brst)
-    output /= len(fs)
+    output = np.sum(
+        np.array([sig.lfilter(f[0], f[1], brst) for f in fs]), axis=0) / len(fs)
 
     # save the synthesized tube samples
     wav_write("wav/tube_{}.wav".format(i + 1), FS, output)
