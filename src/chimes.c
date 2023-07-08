@@ -241,14 +241,14 @@ static uint8_t trig_update(trig_t *trig, uint32_t i)
     {
         if (trig->state == 0)
         {
-            float ps[N_TUBES + 1] = {1.0 - p, p / N_TUBES, p / N_TUBES, p / N_TUBES, p / N_TUBES, p / N_TUBES};
-            uint8_t es[N_TUBES + 1] = {0, 1, 2, 3, 4, 5};
+            const float ps[N_TUBES + 1] = {1.0 - p, p / N_TUBES, p / N_TUBES, p / N_TUBES, p / N_TUBES, p / N_TUBES};
+            const uint8_t es[N_TUBES + 1] = {0, 1, 2, 3, 4, 5};
             trig->state = rnd_choice(es, ps, N_TUBES + 1);
         }
         else
         {
-            float ps[3] = {1.0 - p, p / 2.0, p / 2.0};
-            uint8_t es[3] = {
+            const float ps[3] = {1.0 - p, p / 2.0, p / 2.0};
+            const uint8_t es[3] = {
                 0,
                 trig->state > 1 ? trig->state - 1 : N_TUBES,
                 trig->state < N_TUBES ? trig->state + 1 : 1,
@@ -329,12 +329,12 @@ static float iirfilt_3_3_update(iirfilt_3_3_t *iirfilt, float x)
     iirfilt->xs[2] = x;
 
     float y = ((*iirfilt->bs)[0] * iirfilt->xs[2]) +
-              ((*iirfilt->bs)[1] * iirfilt->xs[1]) +
+              // ((*iirfilt->bs)[1] * iirfilt->xs[1]) +
               ((*iirfilt->bs)[2] * iirfilt->xs[0]) -
               ((*iirfilt->as)[1] * iirfilt->ys[1]) -
               ((*iirfilt->as)[2] * iirfilt->ys[0]);
 
-    y /= (*iirfilt->as)[0];
+    // y /= (*iirfilt->as)[0];
     iirfilt->ys[0] = iirfilt->ys[1];
     iirfilt->ys[1] = y;
 
