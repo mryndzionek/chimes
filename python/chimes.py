@@ -130,17 +130,9 @@ h_prob = list(map(hit_prob, en))
 trigger = Trigger(N_BELLS)
 energy.En_prev = 0
 strikes = [trigger.update(i) for i in range(len(time))]
-
-fig, axs = plt.subplots(4)
-for ax in axs:
-    ax.grid(True)
-
-axs[0].plot(time, wnd_s)
-axs[1].plot(time, en)
-axs[2].plot(time, h_prob)
-axs[3].plot(time, strikes)
-plt.xlabel("time [s]")
-plt.show()
+strikes = list(
+    map(lambda s: 0 if s[0] == s[1] else s[0],
+        zip(strikes, strikes[1:] + [0])))
 
 for i, ms in enumerate(MODES):
     n = FS
@@ -161,12 +153,11 @@ for n in range(N_BELLS):
     bell_n = list(map(lambda s: s == n + 1, strikes))
     bg = BurstGen()
     brsts = []
-    prev_s = False
+
     for i, s in enumerate(bell_n):
-        if s and (prev_s != s):
+        if s:
             bg.reset(en[i])
         brsts.append(bg.update(i))
-        prev_s = s
 
     output = np.zeros(len(bell_n))
     fs = resonator_coefs(MODES[n])
@@ -181,4 +172,35 @@ for n in range(N_BELLS):
 
     chimes += output / (N_BELLS * len(fs))
 
+fig, axs = plt.subplots(5)
+fig.set_figwidth(20)
+fig.set_figheight(10)
+
+for ax in axs:
+    ax.grid(True)
+    ax.set_xlim(0, END_TIME)
+    ax.set_xticks(np.arange(min(time), max(time)+1, 1.0))
+
+color = '#e08764'
+axs[0].plot(time, wnd_s, color=color)
+axs[0].set_ylabel("Wind force")
+
+axs[1].plot(time, en, color=color)
+axs[1].set_ylabel("Energy")
+
+axs[2].plot(time, h_prob, color=color)
+axs[2].set_ylabel("Hit probability")
+
+loc_bars = list(filter(lambda p: p[1] > 0, zip(time, strikes)))
+axs[3].bar([p[0] for p in loc_bars], [p[1] for p in loc_bars],
+           width=0.08, color=color)
+axs[3].set_ylabel("Strikes")
+
+axs[4].plot(time, chimes, color=color)
+axs[4].set_ylabel("Model output")
+
+plt.xlabel("time [s]")
+plt.show()
+
 wav_write("wav/chimes.wav", FS, chimes * 0.9)
+fig.savefig("plots.svg", format="svg", dpi=1200, transparent=True)
