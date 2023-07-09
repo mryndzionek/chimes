@@ -121,6 +121,72 @@ def resonator_coefs(modes):
     return fs
 
 
+def write_lines_to_file(ls, fn):
+    with open(fn, "w", encoding='utf-8') as f:
+        for l in ls:
+            f.write(l + "\n")
+
+
+def gen_C_cfg():
+    n_reson = len(MODES[0])
+
+    ls = ["#ifndef __CHIMES_CFG__",
+          "#define __CHIMES_CFG__",
+          "",
+          "#define N_TUBES ({})".format(N_BELLS),
+          "#define N_RESON ({})".format(n_reson),
+          "",
+          "typedef const float (*a_coefs_t)[3];",
+          "typedef const float (*b_coefs_t)[3];",
+          ""]
+
+    for n in range(N_BELLS):
+        f_coefs = resonator_coefs(MODES[n])
+
+        for i, (b_s, a_s) in enumerate(f_coefs):
+            ls.append("static const float T{}_B{}[{}] = {{ {} }};".format(
+                n + 1, i + 1, len(b_s), ", ".join(list(map(str, b_s)))))
+            ls.append("static const float T{}_A{}[{}] = {{ {} }};".format(
+                n + 1, i + 1, len(a_s), ", ".join(list(map(str, a_s)))))
+            ls.append("")
+
+    def gen_init(ab):
+        return ", ".join(["&T##_x##_{}{}".format(ab, i + 1) for i in range(n_reson)])
+
+    ls.extend(
+        ["#define TUBE_INIT(_x) \\",
+         "    do \\",
+         "    { \\",
+         "        tube_init(&chime ->tubes[_x - 1], \\",
+         "                  &(b_coefs_t[N_RESON]){" + gen_init("B") + "},  \\",
+         "                  &(a_coefs_t[N_RESON]){" + gen_init("A") + "}); \\",
+         "    } while (0)",
+         ""])
+
+    ls.extend(
+        ["#define TUBES_INIT() \\",
+         "    do \\",
+         "    { \\"])
+
+    ls.extend(["        TUBE_INIT({}); \\".format(i + 1)
+              for i in range(N_BELLS)])
+
+    ls.extend(
+        ["    } while (0)",
+         ""])
+
+    ls.extend([
+        "#define TRIG_PROBS() \\",
+        "    const float ps[N_TUBES + 1] = {1.0 - p, " +
+        ", ".join(["p / N_TUBES" for _ in range(N_BELLS)]) + "}; \\",
+        "    const uint8_t es[N_TUBES + 1] = {0, " +
+        ", ".join([str(i + 1) for i in range(N_BELLS)]) + "}; \\",
+        ""])
+
+    ls.append("#endif // __CHIMES_CFG__")
+    write_lines_to_file(ls, "../include/chimes_cfg.h")
+
+
 time = np.arange(0, END_TIME, TS)
 wnd_s = np.array(list(map(wind, time)))
 energy.En_prev = 0
@@ -139,10 +205,10 @@ for i, ms in enumerate(MODES):
     bg = BurstGen()
     bg.reset(0.2)
     brst = [bg.update(j) for j in range(n)]
-    fs = resonator_coefs(ms)
+    f_coefs = resonator_coefs(ms)
 
     output = np.sum(
-        np.array([sig.lfilter(f[0], f[1], brst) for f in fs]), axis=0) / len(fs)
+        np.array([sig.lfilter(b_s, a_s, brst) for (b_s, a_s) in f_coefs]), axis=0) / len(f_coefs)
 
     # save the synthesized tube samples
     wav_write("wav/tube_{}.wav".format(i + 1), FS, output)
@@ -160,17 +226,14 @@ for n in range(N_BELLS):
         brsts.append(bg.update(i))
 
     output = np.zeros(len(bell_n))
-    fs = resonator_coefs(MODES[n])
+    f_coefs = resonator_coefs(MODES[n])
 
-    for i, f in enumerate(fs):
-        output += sig.lfilter(f[0], f[1], brsts)
-        # print("static const float T{}_B{}[{}] = {{ {} }};".format(
-        #     n + 1, i + 1, len(f[0]), ", ".join(list(map(str, f[0])))))
-        # print("static const float T{}_A{}[{}] = {{ {} }};".format(
-        #     n + 1, i + 1, len(f[1]), ", ".join(list(map(str, f[1])))))
-        # print("")
+    for i, (b_s, a_s) in enumerate(f_coefs):
+        output += sig.lfilter(b_s, a_s, brsts)
 
-    chimes += output / (N_BELLS * len(fs))
+    chimes += output / (N_BELLS * len(f_coefs))
+
+gen_C_cfg()
 
 fig, axs = plt.subplots(5)
 fig.set_figwidth(20)
