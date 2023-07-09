@@ -7,6 +7,7 @@
 #include "pico/util/queue.h"
 #include "pico/multicore.h"
 #include "pico/sem.h"
+#include "pico/rand.h"
 
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
@@ -61,6 +62,7 @@ static void core1_entry()
             sample = chime_update(chime);
             if (chime_is_finished(chime))
             {
+                srand(get_rand_32());
                 chime = chime_init();
             }
             outputBuffer[n][i] = (sample + 1.0) * 80;
@@ -76,7 +78,7 @@ int main()
 {
     uint16_t *data;
 
-    srand(time(NULL));
+    srand(get_rand_32());
     set_sys_clock_khz(FCPU / 1000, true);
 
     queue_init(&results_queue, sizeof(uint16_t *), 1);

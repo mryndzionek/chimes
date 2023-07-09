@@ -19,6 +19,7 @@ add_executable(chimes
 target_link_libraries(chimes
         pico_multicore
         pico_stdlib
+        pico_rand
         hardware_dma
         hardware_pio
         hardware_timer
