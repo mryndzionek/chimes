@@ -15,7 +15,6 @@ END_TIME = 25.0  # [s]
 N_BELLS = 5
 
 T_60 = [40, 7, 2, 1, 0.5]
-assert(len(T_60) == N_BELLS)
 Rs = list(map(lambda t: math.pow(1e-6, 1 / (t * FS)), T_60))
 Gs = [0.0787, 0.1849, 1.0000, 0.0136, 0.0275]
 
@@ -27,8 +26,9 @@ MODES = [[219.8, 590.2, 1115.4, 1766.2, 2513.9],
          [366.1, 967.5, 1794.2, 2831.0, 4015.1]]
 
 assert(len(MODES) == N_BELLS)
-assert(len(Rs) == N_BELLS)
-assert(len(Gs) == N_BELLS)
+assert(len(Rs) == len(MODES[0]))
+assert(len(Gs) == len(MODES[0]))
+assert(len(T_60) == len(MODES[0]))
 
 
 class Trigger:

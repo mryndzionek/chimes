@@ -15,6 +15,14 @@
 #define N_RESON (5)
 #define WIND_POINTS (5)
 
+#define TUBE_INIT(_x)                                                                                      \
+    do                                                                                                     \
+    {                                                                                                      \
+        tube_init(&chime->tubes[_x - 1],                                                                   \
+                  &(b_coefs_t[N_RESON]){&T##_x##_B1, &T##_x##_B2, &T##_x##_B3, &T##_x##_B4, &T##_x##_B5},  \
+                  &(a_coefs_t[N_RESON]){&T##_x##_A1, &T##_x##_A2, &T##_x##_A3, &T##_x##_A4, &T##_x##_A5}); \
+    } while (0)
+
 typedef struct
 {
     uint32_t timestamps[WIND_POINTS];
@@ -383,25 +391,11 @@ chime_t *chime_init(void)
                                                  4.0 + get_rand_up(1.0)},
                            &(float[WIND_POINTS]){0.0, 2.0, 2.0, 0.0, 0.0});
 
-    tube_init(&chime->tubes[0],
-              &(b_coefs_t[N_RESON]){&T1_B1, &T1_B2, &T1_B3, &T1_B4, &T1_B5},
-              &(a_coefs_t[N_RESON]){&T1_A1, &T1_A2, &T1_A3, &T1_A4, &T1_A5});
-
-    tube_init(&chime->tubes[1],
-              &(b_coefs_t[N_RESON]){&T2_B1, &T2_B2, &T2_B3, &T2_B4, &T2_B5},
-              &(a_coefs_t[N_RESON]){&T2_A1, &T2_A2, &T2_A3, &T2_A4, &T2_A5});
-
-    tube_init(&chime->tubes[2],
-              &(b_coefs_t[N_RESON]){&T3_B1, &T3_B2, &T3_B3, &T3_B4, &T3_B5},
-              &(a_coefs_t[N_RESON]){&T3_A1, &T3_A2, &T3_A3, &T3_A4, &T3_A5});
-
-    tube_init(&chime->tubes[3],
-              &(b_coefs_t[N_RESON]){&T4_B1, &T4_B2, &T4_B3, &T4_B4, &T4_B5},
-              &(a_coefs_t[N_RESON]){&T4_A1, &T4_A2, &T4_A3, &T4_A4, &T4_A5});
-
-    tube_init(&chime->tubes[4],
-              &(b_coefs_t[N_RESON]){&T5_B1, &T5_B2, &T5_B3, &T5_B4, &T5_B5},
-              &(a_coefs_t[N_RESON]){&T5_A1, &T5_A2, &T5_A3, &T5_A4, &T5_A5});
+    TUBE_INIT(1);
+    TUBE_INIT(2);
+    TUBE_INIT(3);
+    TUBE_INIT(4);
+    TUBE_INIT(5);
 
     return chime;
 }
