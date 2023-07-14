@@ -17,8 +17,8 @@
 
 #define BUFF_SIZE (SAMPLERATE)
 #define AUDIO_PIN (28)
-#define FCPU (266000000UL)
-#define PWM_MULT (8)
+#define FCPU (280000000UL)
+#define PWM_MULT (16)
 
 static queue_t results_queue;
 static struct semaphore pwm_end_sem;
@@ -29,7 +29,6 @@ static uint16_t *volatile buf_p;
 static void pwm_interrupt_handler()
 {
     static size_t pos = 0;
-    static uint8_t div = PWM_MULT;
 
     pwm_clear_irq(pwm_gpio_to_slice_num(AUDIO_PIN));
 

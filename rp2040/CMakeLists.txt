@@ -11,6 +11,8 @@ pico_sdk_init()
 
 include_directories(../include)
 
+add_compile_options(-Wall -Werror -fdata-sections)
+
 add_executable(chimes
         main.c
         ../src/chimes.c
